@@ -30,6 +30,9 @@ fn main() {
         if let Some(cmd) = cmd_res {
             println!("{}: {}", cmd.name, cmd.description)
         } else {
+            if &ipt == "exit" {
+                break;
+            }
             eprintln!("{ipt}: command not found");
         }
     }
