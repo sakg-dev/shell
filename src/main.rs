@@ -17,19 +17,20 @@ fn main() {
         }
     ];
 
-    print!("$ ");
-    io::stdout().flush().unwrap();
+    while true {
+        print!("$ ");
+        io::stdout().flush().unwrap();
 
-    let mut ipt = String::new();
-    let _ = io::stdin().read_line(&mut ipt);
-    ipt.trim_end();
-    ipt.pop(); // \n
-    // println!("You typed {:?}", ipt);
+        let mut ipt = String::new();
+        let _ = io::stdin().read_line(&mut ipt);
+        ipt.trim_end();
+        ipt.pop(); // \n
 
-    let cmd_res = commands.iter().find(|x| &x.name==&ipt);
-    if let Some(cmd) = cmd_res {
-        println!("{}: {}", cmd.name, cmd.description)
-    } else {
-        eprintln!("{ipt}: command not found");
+        let cmd_res = commands.iter().find(|x| &x.name==&ipt);
+        if let Some(cmd) = cmd_res {
+            println!("{}: {}", cmd.name, cmd.description)
+        } else {
+            eprintln!("{ipt}: command not found");
+        }
     }
 }
