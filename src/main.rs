@@ -1,22 +1,6 @@
 use std::io::{self, Write};
 
-#[derive(Debug)]
-struct Command {
-    name: String,
-    description: String
-}
 fn main() {
-    let commands:Vec<Command> = vec![
-        Command {
-            name: String::from("man"),
-            description: String::from("Provides built in manual for most of the linux programs that are installed on the machine")
-        },
-        Command {
-            name: String::from("cd"),
-            description: String::from("Built in command that helps to change directory")
-        }
-    ];
-
     while true {
         print!("$ ");
         io::stdout().flush().unwrap();
@@ -26,14 +10,12 @@ fn main() {
         ipt.trim_end();
         ipt.pop(); // \n
 
-        let cmd_res = commands.iter().find(|x| &x.name==&ipt);
-        if let Some(cmd) = cmd_res {
-            println!("{}: {}", cmd.name, cmd.description)
-        } else {
-            if &ipt == "exit" {
-                break;
-            }
-            eprintln!("{ipt}: command not found");
+        let args = ipt.split(" ").collect::<Vec<_>>();
+
+        match args[0] {
+            "exit" => break,
+            "echo" => println!("{}", ipt.replacen(args[0], "", 1).trim_start()),
+            _ => eprintln!("{}: command not found",args[0]),
         }
     }
 }
