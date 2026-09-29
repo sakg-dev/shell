@@ -2,6 +2,7 @@ use std::io::{self, Write};
 use std::env;
 use std::fs;
 use std::os::unix::fs::PermissionsExt;
+use std::process::Command;
 
 fn find_exec(exec_name: &str) -> Option<String> {
     let path_val = env::var("PATH").unwrap();
@@ -46,7 +47,7 @@ fn main() {
             "exit" => break,
             "echo" => println!("{}", ipt.replacen(args[0], "", 1).trim_start()),
             "type" => {
-                let cmd = args[1]; // TODO: what if user don't provide
+                let cmd = args[1]; // TODO: what if user doesn't provide
                 if valid_cmds.iter().find(|&&x| x==cmd).is_some() {
                     println!("{} is a shell builtin", cmd);
                 } else {
@@ -56,7 +57,24 @@ fn main() {
                     }
                 }
             },
-            _ => eprintln!("{}: command not found",args[0])
+            _ => {
+                let exec = args[0];
+                match find_exec(exec) {
+                    Some(file_path) => {
+                        // run exec
+                        let mut args = args.clone();
+                        args.remove(0);
+                        let cmd_out = Command::new(file_path).args(args).output().expect("failed to execute");
+                        let mut out = String::from_utf8(cmd_out.stdout).unwrap();
+                        if exec != "clear" {
+                            // rmvs \n which is useless but useful when does clear..
+                            out.pop();
+                        }
+                        println!("{}", out)
+                    }
+                    None => eprintln!("{}: command not found", args[0])
+                }
+            }
         };
     }
 }
