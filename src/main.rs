@@ -3,6 +3,31 @@ use std::env;
 use std::fs;
 use std::os::unix::fs::PermissionsExt;
 
+fn find_exec(exec_name: &str) -> Option<String> {
+    let path_val = env::var("PATH").unwrap();
+    let paths = path_val.split(":");
+    for path in paths {
+        let files = fs::read_dir(path);
+        if let Ok(files) = files {
+            for file in files {
+                if let Ok(file_path_dir_entry) = file {
+                    let file_path_bind = file_path_dir_entry.path();
+                    let file_path = file_path_bind.to_str().unwrap();
+                    let file_name = file_path.split("/").last().unwrap();
+
+                    if file_name == exec_name {
+                        let permissions = file_path_dir_entry.metadata().unwrap().permissions().mode();
+                        if permissions == 33261 { // many exec files returned this.
+                            return Some(file_path.to_string());
+                        }
+                    }
+                }
+            }
+        }
+    }
+    None
+}
+
 fn main() {
     loop {
         print!("$ ");
@@ -10,7 +35,7 @@ fn main() {
 
         let mut ipt = String::new();
         let _ = io::stdin().read_line(&mut ipt);
-        ipt.trim_end();
+        let _ = ipt.trim_end();
         ipt.pop(); // \n
 
         let args = ipt.split(" ").collect::<Vec<_>>();
@@ -25,32 +50,9 @@ fn main() {
                 if valid_cmds.iter().find(|&&x| x==cmd).is_some() {
                     println!("{} is a shell builtin", cmd);
                 } else {
-                    let path_val = env::var("PATH").unwrap();
-                    let paths = path_val.split(":");
-                    let mut exists = false;
-                    'main: for path in paths {
-                        let files = fs::read_dir(path);
-                        if let Ok(files) = files {
-                            for file in files {
-                                if let Ok(file_path_dir_entry) = file {
-                                    let file_path_bind = file_path_dir_entry.path();
-                                    let file_path = file_path_bind.to_str().unwrap();
-                                    let file_name = file_path.split("/").last().unwrap();
-                                                
-                                    if file_name == cmd {
-                                        let permissions = file_path_dir_entry.metadata().unwrap().permissions().mode();
-                                        if permissions == 33261 { // many exec files returned this.
-                                            println!("{cmd} is {file_path}");
-                                            exists = true;
-                                            break 'main; // breaking so that it marks only one path
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    if !exists {
-                        println!("{}: not found", cmd);
+                    match find_exec(cmd){
+                        Some(file_path) => println!("{cmd} is {file_path}"),
+                        None => eprintln!("{}: not found", cmd)
                     }
                 }
             },
