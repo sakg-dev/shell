@@ -3,6 +3,7 @@ use std::env;
 use std::fs;
 use std::os::unix::fs::PermissionsExt;
 use std::process::Command;
+use std::path::Path;
 
 fn find_exec(exec_name: &str) -> Option<String> {
     let path_val = env::var("PATH").unwrap();
@@ -41,7 +42,7 @@ fn main() {
 
         let args = ipt.split(" ").collect::<Vec<_>>();
         
-        let valid_cmds = vec!["exit", "echo", "type", "pwd"];
+        let valid_cmds = vec!["exit", "echo", "type", "pwd", "cd"];
 
         match args[0] {
             "exit" => break,
@@ -61,6 +62,14 @@ fn main() {
                 let current_path = env::current_dir().unwrap().into_os_string().into_string().unwrap();
                 println!("{current_path}")
             },
+            "cd" => {
+                let new_path_str = args[1];
+                let new_path = Path::new(new_path_str);
+                let moved_dir = env::set_current_dir(&new_path).is_ok();
+                if !moved_dir {
+                    eprintln!("cd: {}: No such file or directory", new_path_str);
+                }
+            }
             _ => {
                 let exec = args[0];
                 match find_exec(exec) {
