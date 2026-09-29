@@ -64,7 +64,7 @@ fn main() {
                         // run exec
                         let mut args = args.clone();
                         args.remove(0);
-                        let cmd_out = Command::new(file_path).args(args).output().expect("failed to execute");
+                        let cmd_out = Command::new(exec).args(args).output().expect("failed to execute");
                         let mut out = String::from_utf8(cmd_out.stdout).unwrap();
                         if exec != "clear" {
                             // rmvs \n which is useless but useful when does clear..
