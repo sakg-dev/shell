@@ -63,6 +63,7 @@ fn main() {
                 println!("{current_path}")
             },
             "cd" => {
+                // for absolute and relative(set_current_dir automatically supports it) path
                 let new_path_str = args[1];
                 let new_path = Path::new(new_path_str);
                 let moved_dir = env::set_current_dir(&new_path).is_ok();
