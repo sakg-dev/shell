@@ -3,7 +3,11 @@ use std::env;
 use std::fs;
 use std::os::unix::fs::PermissionsExt;
 use std::process::Command;
-use std::path::Path;
+use std::path::{Path, PathBuf};
+
+fn pathbuf_to_string(pathbuf: PathBuf) -> String {
+    pathbuf.into_os_string().into_string().unwrap()
+}
 
 fn find_exec(exec_name: &str) -> Option<String> {
     let path_val = env::var("PATH").unwrap();
@@ -13,8 +17,7 @@ fn find_exec(exec_name: &str) -> Option<String> {
         if let Ok(files) = files {
             for file in files {
                 if let Ok(file_path_dir_entry) = file {
-                    let file_path_bind = file_path_dir_entry.path();
-                    let file_path = file_path_bind.to_str().unwrap();
+                    let file_path = pathbuf_to_string(file_path_dir_entry.path());
                     let file_name = file_path.split("/").last().unwrap();
 
                     if file_name == exec_name {
@@ -30,6 +33,7 @@ fn find_exec(exec_name: &str) -> Option<String> {
     None
 }
 
+
 fn main() {
     loop {
         print!("$ ");
@@ -44,11 +48,12 @@ fn main() {
         
         let valid_cmds = vec!["exit", "echo", "type", "pwd", "cd"];
 
+        // TODO: its panicking if user doesn't provide enough args
         match args[0] {
             "exit" => break,
             "echo" => println!("{}", ipt.replacen(args[0], "", 1).trim_start()),
             "type" => {
-                let cmd = args[1]; // TODO: what if user doesn't provide
+                let cmd = args[1]; 
                 if valid_cmds.iter().find(|&&x| x==cmd).is_some() {
                     println!("{} is a shell builtin", cmd);
                 } else {
@@ -59,13 +64,14 @@ fn main() {
                 }
             },
             "pwd" => {
-                let current_path = env::current_dir().unwrap().into_os_string().into_string().unwrap();
+                let current_path = pathbuf_to_string(env::current_dir().unwrap());
                 println!("{current_path}")
             },
             "cd" => {
                 // for absolute and relative(set_current_dir automatically supports it) path
-                let new_path_str = args[1];
-                let new_path = Path::new(new_path_str);
+                let home_dir = pathbuf_to_string(env::home_dir().unwrap());
+                let new_path_str = args[1].replacen("~", &home_dir, 1);
+                let new_path = Path::new(&new_path_str);
                 let moved_dir = env::set_current_dir(&new_path).is_ok();
                 if !moved_dir {
                     eprintln!("cd: {}: No such file or directory", new_path_str);
