@@ -33,6 +33,9 @@ fn find_exec(exec_name: &str) -> Option<String> {
     None
 }
 
+fn split_args(args_str: &str) -> Vec<&str>{
+    args_str.split_whitespace().collect::<Vec<&str>>()
+}
 
 fn main() {
     loop {
@@ -44,14 +47,17 @@ fn main() {
         let _ = ipt.trim_end();
         ipt.pop(); // \n
 
-        let args = ipt.split(" ").collect::<Vec<_>>();
+        let mut args = split_args(&ipt);
         
         let valid_cmds = vec!["exit", "echo", "type", "pwd", "cd"];
 
         // TODO: its panicking if user doesn't provide enough args
         match args[0] {
             "exit" => break,
-            "echo" => println!("{}", ipt.replacen(args[0], "", 1).trim_start()),
+            "echo" => {
+                args.remove(0);
+                println!("{}", args.join(" "));
+            },
             "type" => {
                 let cmd = args[1]; 
                 if valid_cmds.iter().find(|&&x| x==cmd).is_some() {
@@ -82,7 +88,6 @@ fn main() {
                 match find_exec(exec) {
                     Some(_file_path) => {
                         // run exec
-                        let mut args = args.clone();
                         args.remove(0);
                         let cmd_out = Command::new(exec).args(args).output().expect("failed to execute");
                         let mut out = String::from_utf8(cmd_out.stdout).unwrap();
