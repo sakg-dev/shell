@@ -41,7 +41,7 @@ fn main() {
 
         let args = ipt.split(" ").collect::<Vec<_>>();
         
-        let valid_cmds = vec!["exit", "echo", "type"];
+        let valid_cmds = vec!["exit", "echo", "type", "pwd"];
 
         match args[0] {
             "exit" => break,
@@ -57,10 +57,14 @@ fn main() {
                     }
                 }
             },
+            "pwd" => {
+                let current_path = env::current_dir().unwrap().into_os_string().into_string().unwrap();
+                println!("{current_path}")
+            },
             _ => {
                 let exec = args[0];
                 match find_exec(exec) {
-                    Some(file_path) => {
+                    Some(_file_path) => {
                         // run exec
                         let mut args = args.clone();
                         args.remove(0);
