@@ -38,14 +38,31 @@ fn split_args(args_str: &str) -> Vec<String>{
     // args_str.split_whitespace().collect::<Vec<&str>>();
 
     // println!("contains single quote");
+    // println!("\"hii\"");
     let char_re = r"a-zA-Z0-9\/~.\-_";
-    let re = Regex::new(format!(r"('[{char_re} ]*'|[{char_re}]*)* *").as_str()).unwrap();
+    let re = Regex::new(format!(r#"("[{char_re} ']*"|'[{char_re} ]*'|[{char_re}]*)* *"#).as_str()).unwrap();
+    // let reg = Regex::new(format!(r#"("[a-z ']*")"#).as_str()).unwrap();
+    // println!("{:?}", reg.find(r#""hey its shell's test""#).unwrap());
     let args_iter = re.find_iter(args_str);
 
     let mut args: Vec<String> = Vec::new();
     for arg in args_iter {
         let a = arg.as_str();
-        if a.contains("'"){
+        // println!("{:?}", a);
+        if a.contains("\""){
+            let mut a = a.replace("\"", "");
+            if a.len() > 0 {
+                loop {
+                    let last_idx = a.len()-1;
+                    if a.as_bytes()[last_idx] == 32 { // if last substr contains space
+                        a.remove(last_idx);
+                    } else {
+                        break
+                    }
+                }
+                args.push(a)
+            }
+        } else if a.contains("'"){
             let mut a = a.replace("'", "");
             if a.len() > 0 {
                 if a.as_bytes()[a.len()-1] == 32 { // if last substr contains space
@@ -72,6 +89,7 @@ fn main() {
 
         let args_bind = split_args(&ipt);
         let mut args = args_bind.iter().map(|c|c.as_str()).collect::<Vec<&str>>();
+        //println!("{:?}", args);
         
         let valid_cmds = vec!["exit", "echo", "type", "pwd", "cd"];
 
