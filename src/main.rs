@@ -4,6 +4,7 @@ use std::fs;
 use std::os::unix::fs::PermissionsExt;
 use std::process::Command;
 use std::path::{Path, PathBuf};
+use regex::Regex;
 
 fn pathbuf_to_string(pathbuf: PathBuf) -> String {
     pathbuf.into_os_string().into_string().unwrap()
@@ -22,7 +23,7 @@ fn find_exec(exec_name: &str) -> Option<String> {
 
                     if file_name == exec_name {
                         let permissions = file_path_dir_entry.metadata().unwrap().permissions().mode();
-                        if permissions == 33261 { // many exec files returned this.
+                        if permissions == 33261 { // many exec files returned 33261
                             return Some(file_path.to_string());
                         }
                     }
@@ -33,8 +34,26 @@ fn find_exec(exec_name: &str) -> Option<String> {
     None
 }
 
-fn split_args(args_str: &str) -> Vec<&str>{
-    args_str.split_whitespace().collect::<Vec<&str>>()
+fn split_args(args_str: &str) -> Vec<String>{
+    // args_str.split_whitespace().collect::<Vec<&str>>();
+
+    // println!("contains single quote");
+    let re = Regex::new("('[a-z ]*'|[a-z]*) *").unwrap();
+    let args_iter = re.find_iter(args_str);
+
+    let mut args: Vec<String> = Vec::new();
+    for arg in args_iter {
+        let a = arg.as_str();
+        if a.contains("'"){
+            let a = a.replace("'", "");
+            if a.len() > 0 {
+                args.push(a)
+            }
+        } else {
+            args.push(a.replace(" ", ""));
+        }
+    }
+    args
 }
 
 fn main() {
@@ -47,7 +66,9 @@ fn main() {
         let _ = ipt.trim_end();
         ipt.pop(); // \n
 
-        let mut args = split_args(&ipt);
+        let args_bind = split_args(&ipt);
+        let mut args = args_bind.iter().map(|c|c.as_str()).collect::<Vec<&str>>();
+        println!("{:?}", args);
         
         let valid_cmds = vec!["exit", "echo", "type", "pwd", "cd"];
 
