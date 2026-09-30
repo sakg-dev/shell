@@ -38,13 +38,15 @@ fn split_args(args_str: &str) -> Vec<String>{
     // args_str.split_whitespace().collect::<Vec<&str>>();
 
     // println!("contains single quote");
-    let char_re = r"a-zA-Z0-9\/~.\-_";
-    let re = Regex::new(format!(r"('[{char_re} ]*'|[{char_re}]*)* *").as_str()).unwrap();
+    // println!("\"hii\"");
+    let char_re = r"a-zA-Z0-9/~.-_";
+    let re = Regex::new(format!(r#"("[{char_re}']*"|'[{char_re} ]*'|[{char_re}]*)* *"#).as_str()).unwrap();
     let args_iter = re.find_iter(args_str);
 
     let mut args: Vec<String> = Vec::new();
     for arg in args_iter {
         let a = arg.as_str();
+        println!("{a}");
         if a.contains("'"){
             let mut a = a.replace("'", "");
             if a.len() > 0 {
@@ -72,6 +74,7 @@ fn main() {
 
         let args_bind = split_args(&ipt);
         let mut args = args_bind.iter().map(|c|c.as_str()).collect::<Vec<&str>>();
+        println!("{:?}", args);
         
         let valid_cmds = vec!["exit", "echo", "type", "pwd", "cd"];
 
