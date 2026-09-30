@@ -34,44 +34,39 @@ fn find_exec(exec_name: &str) -> Option<String> {
     None
 }
 
-fn split_args(args_str: &str) -> Vec<String>{
-    // args_str.split_whitespace().collect::<Vec<&str>>();
-
-    // println!("contains single quote");
-    // println!("\"hii\"");
-    let char_re = r"a-zA-Z0-9\/~.\-_";
+fn split_args(args_str: &str) -> Vec<String> {
+    let char_re = r"a-zA-Z0-9\/~\.\-_";
     let re = Regex::new(format!(r#"("[{char_re} ']*"|'[{char_re} ]*'|[{char_re}]*)* *"#).as_str()).unwrap();
-    // let reg = Regex::new(format!(r#"("[a-z ']*")"#).as_str()).unwrap();
-    // println!("{:?}", reg.find(r#""hey its shell's test""#).unwrap());
-    let args_iter = re.find_iter(args_str);
 
+    let args_iter = re.find_iter(args_str);
     let mut args: Vec<String> = Vec::new();
+
     for arg in args_iter {
-        let a = arg.as_str();
-        // println!("{:?}", a);
-        if a.contains("\""){
-            let mut a = a.replace("\"", "");
-            if a.len() > 0 {
-                loop {
-                    let last_idx = a.len()-1;
-                    if a.as_bytes()[last_idx] == 32 { // if last substr contains space
-                        a.remove(last_idx);
+        let arg_str = arg.as_str(); // match to str
+        if arg_str.contains("\"") { // most prioritized
+            let mut arg_string = arg_str.replace("\"", "");
+            if arg_string.len() > 0 {
+                loop { // running a loop here bcz "something   "    "hey" would be returned as "\"something   \"   " which is wrong as there are extra whitespaces that we don't need bt through ts loop we are removing all right side whitespaces, but problem is, it also rmvs whitespaces which is inside " TODO.. btw don't we need this in ' ?
+                    let last_idx = arg_string.len() - 1;
+                    if arg_string.as_bytes()[last_idx] == 32 { // if last substr contains space
+                        arg_string.remove(last_idx);
                     } else {
                         break
                     }
                 }
-                args.push(a)
+                args.push(arg_string)
             }
-        } else if a.contains("'"){
-            let mut a = a.replace("'", "");
-            if a.len() > 0 {
-                if a.as_bytes()[a.len()-1] == 32 { // if last substr contains space
-                    a.remove(a.len()-1);
+        } else if arg_str.contains("'") {
+            let mut arg_string = arg_str.replace("'", "");
+            if arg_string.len() > 0 {
+                let last_idx = arg_string.len() - 1;
+                if arg_string.as_bytes()[last_idx] == 32 { // if last substr contains space
+                    arg_string.remove(last_idx);
                 }
-                args.push(a)
+                args.push(arg_string)
             }
         } else {
-            args.push(a.replace(" ", ""));
+            args.push(arg_str.replace(" ", ""));
         }
     }
     args
